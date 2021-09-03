@@ -5,14 +5,18 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+
 #define NULL "\0"
+#define EHTERNET_LEN 24
+#define FIXED_PARAM_LEN 12
+#define FIELD_JUMP_LEN 2
 
 void usage() {
-    printf("syntax: pcap-test <interface>\n");
-    printf("sample: pcap-test wlan0\n");
+    printf("syntax: ./beacon_frame_capture <interface>\n");
+    printf("sample: ./beacon_frame_capture wlan0\n");
 }
 
-void* thread_channel(void * dev){   //1초마다 채널을 변경해주는 함수
+void* thread_channel(void * dev){   //1초마다 채널을 변경
     int cnt = 1;
     while(1){
             char command[100];
@@ -60,7 +64,6 @@ int main(int argc, char* argv[]) {
     while (1) {
         struct pcap_pkthdr* header;
         const u_char* packet;
-        //void * next_header_ptr;
         unsigned int radiotap_len, frame_control, SSID_len, support_len, DS_len;
 
         int res = pcap_next_ex(pcap, &header, &packet);
@@ -75,15 +78,14 @@ int main(int argc, char* argv[]) {
         packet += radiotap_len;
         frame_control = dump_beacon_header((struct beacon_header *)packet);
         if (frame_control == 0x8000){
-            packet += 24;
+            packet += EHTERNET_LEN;
             dump_fixed_parameters((struct fixed_parameters *) packet);
-            packet += 12;
+            packet += FIXED_PARAM_LEN;
             SSID_len = dump_SSID_parameter((struct tag_SSID_parameter *) packet);
-            packet += SSID_len + 2;
+            packet += SSID_len + FIELD_JUMP_LEN;
             support_len = dump_supported_rates((struct tag_supported_rates *) packet);
-            packet += support_len + 2;
+            packet += support_len + FIELD_JUMP_LEN;
             DS_len = dump_DS_parameter((struct tag_DS_parameter *) packet);
-            packet += DS_len + 2;
         }
         printf("\n\n");
     }

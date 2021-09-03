@@ -13,7 +13,6 @@ int dump_beacon_header(struct beacon_header *beacon_header)
     unsigned char *smac = beacon_header->shost;
     unsigned char *dmac = beacon_header->dhost;
     unsigned char *bssid = beacon_header->bssid;
-
     if (frameControl==0x8000){
     printf("[FrameControl] : 0x%04x\n", frameControl);
     printf("[BEACON] : "\

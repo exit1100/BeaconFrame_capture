@@ -7,8 +7,7 @@ int dump_radiotap(struct radiotap_header *radiotap_header){
     return len;
 }
 
-int dump_beacon_header(struct beacon_header *beacon_header)
-{
+int dump_beacon_header(struct beacon_header *beacon_header){
     unsigned int frameControl = htons(beacon_header->frame_control);
     return frameControl;
 }

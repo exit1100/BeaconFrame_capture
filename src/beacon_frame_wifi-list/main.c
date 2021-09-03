@@ -6,7 +6,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+
 #define NULL "\0"
+#define EHTERNET_LEN 24
+#define FIXED_PARAM_LEN 12
+#define FIELD_JUMP_LEN 2
 
 struct wifiList{
     unsigned char SSID[32];
@@ -57,8 +61,8 @@ void append(unsigned char * SSID, unsigned char * BSSID, int channel){  //와이
 
 
 void usage(){
-    printf("syntax: pcap-test <interface>\n");
-    printf("sample: pcap-test wlan0\n");
+    printf("syntax: ./beacon_frame_wifi-list <interface>\n");
+    printf("sample: ./beacon_frame_wifi-list wlan0\n");
 }
 
 void* thread_channel(void * dev){   //모든 채널의 와이파이 패킷을 받기 위해 1초마다 채널을 변경
@@ -97,7 +101,6 @@ int main(int argc, char* argv[]) {
     char errbuf[PCAP_ERRBUF_SIZE];
 
     monitor(dev);
-
     pthread_t thread;
     pthread_create(&thread, 0, thread_channel, dev);
 
@@ -130,9 +133,9 @@ int main(int argc, char* argv[]) {
             BSSID_str[i] = BSSID->bssid[i];
         }
         if (frame_control == 0x8000){   //beacon frame
-            packet += 24;
+            packet += EHTERNET_LEN;
             dump_fixed_parameters((struct fixed_parameters *) packet);
-            packet += 12;
+            packet += FIXED_PARAM_LEN;
             SSID_len = dump_SSID_parameter((struct tag_SSID_parameter *) packet);
 
             //SSID를 배열에 저장하는 부분
@@ -141,9 +144,9 @@ int main(int argc, char* argv[]) {
             SSID_str[SSID_len] = '\0';
             if (SSID_str[0] == '\0') continue;
 
-            packet += SSID_len + 2;
+            packet += SSID_len + FIELD_JUMP_LEN;
             support_len = dump_supported_rates((struct tag_supported_rates *) packet);
-            packet += support_len + 2;
+            packet += support_len + FIELD_JUMP_LEN;
             DS_len = dump_DS_parameter((struct tag_DS_parameter *) packet);
             struct tag_DS_parameter * DS = (struct tag_DS_parameter *) packet;
             channel = DS->channel;  //현 패킷의 와이파이 채널을 저장
